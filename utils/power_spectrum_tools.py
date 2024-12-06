@@ -82,7 +82,7 @@ file_names = ['profile_bfld_halo_1e10_h12.txt', 'profile_bfld_halo_1e10_h11.txt'
 mass_bins = 10**np.array([9.9, 10.4, 10.9, 11.4, 12, 12.5, 13])
 
 # Radial bins are the same for all of the files
-rad_bins = np.genfromtxt('./data/bfield_profiles/'+file_names[0], skip_header=3, max_rows=1)
+rad_bins = np.genfromtxt(MAIN_DIR + '/data/bfield_profiles/'+file_names[0], skip_header=3, max_rows=1)
 rad_bins_c = rad_bins[:-1]+(rad_bins[1:]-rad_bins[:-1])/2
 
 Bfiled_grid = np.zeros((len(mass_bins), 66, 23))
@@ -90,7 +90,7 @@ logB_interp_list = []
 
 for i, file in enumerate(file_names):
     # Magnetic field profiles in muG
-    Bfiled_grid[i] = np.genfromtxt('./data/bfield_profiles/'+file_names[i], skip_header=7).astype(float)
+    Bfiled_grid[i] = np.genfromtxt(MAIN_DIR +'/data/bfield_profiles/'+file_names[i], skip_header=7).astype(float)
 #    logB_interp_list.append(si.RegularGridInterpolator((np.log10(Bfiled_grid[i][:, 0]), rad_bins_c), np.log10(Bfiled_grid[i][:, 3:]*1E6),
 #                                                    bounds_error=False, fill_value=-10 ))
     # Use only every other 8 redshift bins to smooth out the profiles
