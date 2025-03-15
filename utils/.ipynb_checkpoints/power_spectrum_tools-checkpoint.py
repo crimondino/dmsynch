@@ -40,7 +40,7 @@ def get_j0(mchi, sigmav, nu):
     nu_ref = 1.E11*Hz
     sigmav_ref = 3.E-26*CentiMeter**3/Second
     mchi_ref = 1000
-    return 20.8351 * (nu_ref/nu)**1/2 * (sigmav/sigmav_ref) * (mchi_ref/mchi)**2
+    return 20.8351/(4*np.pi) * (nu_ref/nu)**0.5 * (sigmav/sigmav_ref) * (mchi_ref/mchi)**2
 #%%
 
 #%%
@@ -82,7 +82,7 @@ file_names = ['profile_bfld_halo_1e10_h12.txt', 'profile_bfld_halo_1e10_h11.txt'
 mass_bins = 10**np.array([9.9, 10.4, 10.9, 11.4, 12, 12.5, 13])
 
 # Radial bins are the same for all of the files
-rad_bins = np.genfromtxt('./data/bfield_profiles/'+file_names[0], skip_header=3, max_rows=1)
+rad_bins = np.genfromtxt(MAIN_DIR + '/data/bfield_profiles/'+file_names[0], skip_header=3, max_rows=1)
 rad_bins_c = rad_bins[:-1]+(rad_bins[1:]-rad_bins[:-1])/2
 
 Bfiled_grid = np.zeros((len(mass_bins), 66, 23))
@@ -90,7 +90,7 @@ logB_interp_list = []
 
 for i, file in enumerate(file_names):
     # Magnetic field profiles in muG
-    Bfiled_grid[i] = np.genfromtxt('./data/bfield_profiles/'+file_names[i], skip_header=7).astype(float)
+    Bfiled_grid[i] = np.genfromtxt(MAIN_DIR +'/data/bfield_profiles/'+file_names[i], skip_header=7).astype(float)
 #    logB_interp_list.append(si.RegularGridInterpolator((np.log10(Bfiled_grid[i][:, 0]), rad_bins_c), np.log10(Bfiled_grid[i][:, 3:]*1E6),
 #                                                    bounds_error=False, fill_value=-10 ))
     # Use only every other 8 redshift bins to smooth out the profiles
@@ -132,4 +132,44 @@ def get_B_rs(rs, zs, ms, m200c, r200c, rhocritz):
                 else:
                     Brs[i_z, i_m, i_r] = 10.**logB_interp_list[ms_ind[i_m]]( [np.log10(z_val), rratio_val ] )     
     return Brs
+
+
+def subhalo_boost(M_h, z): 
+    ''' 
+    Subhalo boost factor. 
+
+    Parameters
+    ----------
+    M_h : float
+        Halo mass in solar mass. 
+    z : float
+        Redshift. 
+
+    Notes
+    -----
+    Taken from 1903.11427
+    '''
+
+    # X = 2.7 * np.exp(-0.2 * z) + 0.15 
+    # Y = 0.4 + (-0.224 * z + 0.56) * np.exp(-0.8 * z) 
+    # a = 0.10 + 0.095 * np.exp(-0.5 * z) 
+    # b = 0.03 * z**2 - 0.08 * z - 0.83 
+    # c = 0.004 * z**2 - 0.04 * z - 0.6 
+    # m1 = -3.17 * z + 17.4 
+    # m2 = -(0.2 * z - 1)**5 - 4
+
+    X = 2.2 * np.exp(-0.75 * z) + 0.67 
+    Y = 2.5 * np.exp(-0.005 * z) + 0.8
+    a = 0.1 * np.exp(-0.5 * z) + 0.22 
+    b = 0.8 * np.exp(-0.5*(z - 12)**4) - 0.24
+    c = -0.0005*z**3 - 0.032*z**2 + 0.28*z - 1.12
+    m1 = -2.6*z + 8.2 
+    m2 = 0.1 * np.exp(-3*z) - 12. 
+
+    return 10 ** (
+        X / (1 + np.exp(-a * (np.log10(M_h) - m1))) 
+        + c * (
+            1 + Y / (1 + np.exp(-b * (np.log10(M_h) - m2)))
+        )
+    )
 #%%
